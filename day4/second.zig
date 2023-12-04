@@ -14,14 +14,15 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
     const read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
-    const hash_map = std.AutoHashMap(usize, usize).init(allocator);
-    _ = hash_map;
+    //var hash_map = std.AutoHashMap(usize, usize).init(allocator);
+    var lookup: [198]usize = .{1} ** 198;
+    //defer hash_map.deinit();
     defer allocator.free(read_buf);
     // defer allocator.free(input_arr);
     // defer allocator.free(list_of_numbers);
     defer file.close();
     var it = std.mem.split(u8, read_buf, "\n");
-    var line_idx: usize = 0;
+    var line_idx: usize = 1;
     var total: usize = 0;
     while (it.next()) |line| : (line_idx += 1) {
         var it_2 = std.mem.tokenizeAny(u8, line, ":|");
@@ -47,7 +48,11 @@ pub fn main() !void {
                 count += 1;
             }
         }
-        if (count > 0) total += std.math.pow(usize, 2, count - 1);
+        for (line_idx + 1..line_idx + count + 1) |i| {
+            lookup[i - 1] += lookup[line_idx - 1];
+        }
+        total += lookup[line_idx - 1];
+
         //std.debug.print("{}\n", .{count});
     }
     std.debug.print("{}\n", .{total});
