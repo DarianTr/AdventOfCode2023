@@ -1,0 +1,2 @@
+    const hash_map = std.AutoHashMap(usize, usize);
+    _ = hash_map;
