@@ -33,10 +33,10 @@ pub fn main() !void {
 
     var it = std.mem.split(u8, read_buf, "\n\n");
     const key = it.next().?;
-    const output = try allocator.dupe(u8, key);
+    //const output = try allocator.dupe(u8, key);
     const key_size = key.len;
-    std.mem.replaceScalar(u8, output, 'L', 0);
-    std.mem.replaceScalar(u8, output, 'R', 1);
+    // std.mem.replaceScalar(u8, output, 'L', 0);
+    // std.mem.replaceScalar(u8, output, 'R', 1);
 
     const map = it.next().?;
     var nexts = std.mem.split(u8, map, "\n");
@@ -52,6 +52,7 @@ pub fn main() !void {
         if (ending_with(start, 'A')) try running.append(start);
     }
     var step_count: usize = 0;
+    std.debug.print("{}\n", .{running.items.len});
     var ending_with_z: usize = 0;
     while (ending_with_z != running.items.len) : (step_count += 1) {
         ending_with_z = 0;
