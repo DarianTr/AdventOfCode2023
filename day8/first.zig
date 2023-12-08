@@ -34,7 +34,7 @@ pub fn main() !void {
     const map = it.next().?;
     var nexts = std.mem.split(u8, map, "\n");
     while (nexts.next()) |next| {
-        std.debug.print("{s}\n", .{next});
+        //std.debug.print("{s}\n", .{next});
         var it_2 = std.mem.split(u8, next, " = ");
         const start = it_2.next().?;
         const next_steps = it_2.next().?;
@@ -46,7 +46,7 @@ pub fn main() !void {
     var step_count: usize = 0;
     var current_pos: []const u8 = "AAA";
     const last: []const u8 = "ZZZ";
-    while (!is_equal(current_pos, last)) : (step_count += 1) {
+    while (!std.mem.eql(u8, current_pos, last)) : (step_count += 1) {
         const next_step = hash_map.get(current_pos).?;
         if (key[step_count % key_size] == 'L') {
             current_pos = next_step.left;
