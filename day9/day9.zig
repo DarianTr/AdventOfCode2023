@@ -9,8 +9,7 @@ fn get_first_element(nums: *std.ArrayList(i64)) !i64 {
     }
     try nums.resize(nums.items.len - 1);
     if (all_zero) return first_element;
-    const res = first_element - try get_first_element(nums);
-    return res;
+    return first_element - try get_first_element(nums);
 }
 
 fn get_last_element(nums: *std.ArrayList(i64)) !i64 {
