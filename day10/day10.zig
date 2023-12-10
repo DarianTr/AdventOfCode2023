@@ -10,13 +10,6 @@ const Position = struct {
     type: u8,
 };
 
-const Direction = enum(usize) {
-    South,
-    North,
-    West,
-    East,
-};
-
 const Edge = struct {
     start: Position,
     dest: Position,
@@ -25,12 +18,8 @@ const Edge = struct {
 fn getArea() i128 {
     var area: i128 = 0;
     for (edges.items) |e| {
-        std.debug.print("{} {} -> {} {}\n", .{ e.start.x, e.start.y, e.dest.x, e.dest.y });
         area += ((@as(i128, (e.start.x)) - e.dest.x) * (e.start.y + e.dest.y + 1));
     }
-    const e = edges.getLast().dest;
-    const s = edges.items[0].start;
-    area += ((@as(i128, (e.x)) - s.x) * (e.y + s.y + 1));
     return @divExact(area, @as(i128, 2));
 }
 
@@ -54,7 +43,6 @@ fn get_and_replace_s(map: std.ArrayList([]u8)) ![1]Position {
             const row = map.items[y];
             const pos = row[x];
             if (pos == 'S') {
-                map.items[y][x] = 'A';
                 pos_s = Position{ .x = x, .y = y, .type = undefined };
                 break :outer;
             }
@@ -81,9 +69,6 @@ fn get_and_replace_s(map: std.ArrayList([]u8)) ![1]Position {
         res[0] = Position{ .x = pos_s.x + 1, .y = pos_s.y, .type = map.items[pos_s.y][pos_s.x + 1] };
     }
     try edges.append(Edge{ .start = pos_s, .dest = res[0] });
-
-    std.debug.print("{} {}\n", .{ res[0].y, res[0].x });
-    if (res[0].x != undefined) map.items[res[0].y][res[0].x] = 'A';
     return res;
 }
 
@@ -136,9 +121,6 @@ fn get_next_positions(nexts: std.ArrayList(Position), map: std.ArrayList([]u8), 
             }
         }
     }
-    for (res.items) |pos| {
-        map.items[pos.y][pos.x] = 'A';
-    }
     return res;
 }
 
@@ -146,20 +128,12 @@ fn count_loop_size(map: std.ArrayList([]u8), starts: *const [1]Position) !usize 
     var step: usize = 1;
     var nexts = std.ArrayList(Position).init(allocator);
     var visited = std.AutoHashMap(Position, void).init(allocator);
+    try visited.put(starts[0], {});
     try nexts.append(starts[0]);
     while (nexts.items.len != 0) : (step += 1) {
         nexts = try get_next_positions(nexts, map, &visited);
     }
     return step / 2;
-}
-
-fn print_map(map: std.ArrayList([]u8)) !void {
-    var writer = try std.fs.cwd().createFile("output.txt", .{});
-    defer writer.close();
-    for (map.items) |row| {
-        _ = try writer.write(row);
-        _ = try writer.write("\n");
-    }
 }
 
 pub fn main() !void {
@@ -179,18 +153,11 @@ pub fn main() !void {
     }
     const start = try get_and_replace_s(map);
     const res = try count_loop_size(map, &start);
-    _ = res;
-    try print_map(map);
-    var count: usize = 0;
-    for (0..map.items.len) |y| {
-        for (0..map.getLast().len) |x| {
-            if (map.items[y][x] == 'A') count += 1;
-        }
-    }
+    const count: usize = edges.items.len + 1;
     var area = getArea();
     if (area < 0) area *= -1;
     const i = area - (count / 2) + 1;
-    std.debug.print("{} {} {}\n", .{ i, area, count });
+    std.debug.print("Part 1: {}\nPart 2: {}\n", .{ res, i });
 }
 
 //https://en.wikipedia.org/wiki/Pick's_theorem
