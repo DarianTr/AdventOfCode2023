@@ -62,7 +62,7 @@ fn get_count(line: []const u8, cur_idx: usize, record: std.ArrayList(usize), bro
 }
 
 pub fn main() !void {
-    const fileName = "test.txt";
+    const fileName = "puzzle.txt";
     const file = try std.fs.cwd().openFile(fileName, .{});
     const read_buf = try file.readToEndAlloc(allocator, 1024 * 1024);
     var it_line = std.mem.split(u8, read_buf, "\n");
