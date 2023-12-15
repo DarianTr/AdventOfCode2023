@@ -13,7 +13,16 @@ fn get_additional_size(line: []const u8, cur_idx: usize) usize {
     return idx - cur_idx;
 }
 
-fn get_count(line: []const u8, cur_idx: usize, record: std.ArrayList(usize), broken_count: usize) !usize {
+fn hashArrayList(list: std.ArrayList(usize)) []const u8 {
+    var hasher = std.mem.toBytes(list.items);
+    return hasher[0..];
+}
+//idx  record size
+
+fn get_count(line: []const u8, cur_idx: usize, record: std.ArrayList(usize), broken_count: usize, lookup: *[200][40][200]usize) !usize {
+    if (lookup[cur_idx][record.items.len][broken_count] < 1e9) {
+        return lookup[cur_idx][record.items.len][broken_count];
+    }
     if (record.items.len == 0) {
         var idx_2 = cur_idx;
         while (idx_2 < line.len) : (idx_2 += 1) {
@@ -32,15 +41,15 @@ fn get_count(line: []const u8, cur_idx: usize, record: std.ArrayList(usize), bro
     var res: usize = 0;
     var r = try record.clone();
     if (line[cur_idx] == '#') {
-        res += try get_count(line, cur_idx + 1, r, broken_count + 1);
+        res += try get_count(line, cur_idx + 1, r, broken_count + 1, lookup);
     }
     if (line[cur_idx] == '.') {
         if (broken_count == 0) {
-            res += try get_count(line, cur_idx + 1, r, 0);
+            res += try get_count(line, cur_idx + 1, r, 0, lookup);
         } else {
             if (broken_count == r.items[0]) {
                 _ = r.orderedRemove(0);
-                res += try get_count(line, cur_idx + 1, r, 0);
+                res += try get_count(line, cur_idx + 1, r, 0, lookup);
             } else {
                 return 0;
             }
@@ -48,16 +57,19 @@ fn get_count(line: []const u8, cur_idx: usize, record: std.ArrayList(usize), bro
     }
     if (line[cur_idx] == '?') {
         const add_size = @max(1, get_additional_size(line, cur_idx));
-        if (r.items[0] >= broken_count + add_size) res += try get_count(line, cur_idx + add_size, r, broken_count + add_size);
+        if (r.items[0] >= broken_count + add_size) res += try get_count(line, cur_idx + add_size, r, broken_count + add_size, lookup);
         if (broken_count == 0) {
-            res += try get_count(line, cur_idx + 1, r, 0);
+            res += try get_count(line, cur_idx + 1, r, 0, lookup);
         } else {
             if (broken_count == r.items[0]) {
                 _ = r.orderedRemove(0);
-                res += try get_count(line, cur_idx + 1, r, 0);
+                res += try get_count(line, cur_idx + 1, r, 0, lookup);
             }
         }
     }
+
+    lookup[cur_idx][record.items.len][broken_count] = res;
+
     return res;
 }
 
@@ -68,6 +80,7 @@ pub fn main() !void {
     var it_line = std.mem.split(u8, read_buf, "\n");
     var total: usize = 0;
     while (it_line.next()) |line| {
+        var lookup: [200][40][200]usize = undefined;
         var it_2 = std.mem.split(u8, line, " ");
         const content = it_2.next().?;
         var content_2: [10000]u8 = undefined;
@@ -85,7 +98,7 @@ pub fn main() !void {
         for (0..5) |_| {
             try new_nums.appendSlice(nums.items);
         }
-        const val = try get_count(content_2[0 .. content.len * 5 + 5], 0, new_nums, 0);
+        const val = try get_count(content_2[0 .. content.len * 5 + 4], 0, new_nums, 0, &lookup);
         std.debug.print("{}\n", .{val});
         total += val;
     }
