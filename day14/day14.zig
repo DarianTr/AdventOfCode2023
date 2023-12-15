@@ -12,6 +12,23 @@ fn print(input: std.ArrayList(std.ArrayList(u8))) void {
     }
 }
 
+fn flatten(input: *std.ArrayList(std.ArrayList(u8))) !std.ArrayList(u8) {
+    var res = std.ArrayList(u8).init(allocator);
+    for (input.items) |r| {
+        for (r.items) |i| {
+            try res.append(i);
+        }
+    }
+    return res;
+}
+
+fn matrix_to_string(input: *std.ArrayList(std.ArrayList(u8))) ![]const u8 {
+    const flattend = try flatten(input);
+    var string_buffer: [10000]u8 = undefined;
+    std.mem.copy(u8, string_buffer[0..10000], flattend.items);
+    return string_buffer[0..];
+}
+
 fn to_east(input: *std.ArrayList(std.ArrayList(u8))) !void {
     for (0..input.getLast().items.len) |i| {
         var smallest_next_point: usize = input.items.len - 1;
@@ -102,22 +119,8 @@ fn to_south(input: *std.ArrayList(std.ArrayList(u8))) !void { // std.ArrayList(s
     //print(input.*);
 }
 
-fn one_cycle(input: *std.ArrayList(std.ArrayList(u8))) !void {
-    var map = std.AutoHashMap(*std.ArrayList(std.ArrayList(u8)), usize).init(allocator);
+fn get_load(input: *std.ArrayList(std.ArrayList(u8))) usize {
     var total: usize = 0;
-    var counter: usize = 1000000000;
-    while (counter > 0) {
-        if (map.contains(input)) {
-            break;
-        }
-        try map.put(input, counter);
-        try to_north(input);
-        try to_west(input);
-        try to_south(input);
-        try to_east(input);
-        counter -= 1;
-    }
-    total = 0;
     for (0..input.getLast().items.len) |i| {
         var sum: usize = 0;
         var smallest_next_point: usize = input.items.len;
@@ -133,6 +136,45 @@ fn one_cycle(input: *std.ArrayList(std.ArrayList(u8))) !void {
         }
         total += sum;
     }
+    return total;
+}
+
+fn one_cycle(input: *std.ArrayList(std.ArrayList(u8))) !void {
+    var map = std.StringHashMap(usize).init(allocator); //AutoHashMap -> HashMap -> LSP-Crash!
+    var total: usize = 0;
+    var counter: usize = 1000000000;
+    var key: []const u8 = undefined;
+    while (counter > 0) {
+        key = try matrix_to_string(input);
+        key = key[0 .. input.items.len * input.getLast().items.len];
+        if (map.contains(key)) {
+            break;
+        }
+        map.put(key, counter) catch |e| {
+            std.debug.print("{}", .{e});
+        };
+        try to_north(input);
+        try to_west(input);
+        try to_south(input);
+        try to_east(input);
+        counter -= 1;
+    }
+    const found_cycle = 1000000000 - counter;
+    std.debug.print("{} {s}\n", .{ found_cycle, key });
+    const first_appearence = 1000000000 - map.get(key).?;
+    const cycle_size = found_cycle - first_appearence;
+    const ans = 1000000000 - first_appearence % cycle_size;
+    std.debug.print("{} {} {} {}\n", .{ found_cycle, first_appearence, cycle_size, ans });
+    counter = 0;
+    while (counter < ans) : (counter += 1) {
+        key = try matrix_to_string(input);
+        try map.put(key, counter);
+        try to_north(input);
+        try to_west(input);
+        try to_south(input);
+        try to_east(input);
+    }
+    total = get_load(input);
     print(input.*);
     std.debug.print("{}\n", .{total});
 }
