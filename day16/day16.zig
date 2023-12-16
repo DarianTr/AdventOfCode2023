@@ -4,11 +4,13 @@ const allocator = arena.allocator();
 
 var lookup = std.AutoArrayHashMap(Direction, [2]i8).init(allocator);
 
-const Direction = enum(usize) {
-    North,
-    East,
-    South,
-    West,
+const map_size: usize = 110;
+
+pub const Direction = enum(u8) {
+    North = 0,
+    East = 1,
+    South = 2,
+    West = 3,
 };
 
 const BeamPosition = struct {
@@ -34,7 +36,7 @@ fn add(a: usize, b: i8) usize {
     return @as(usize, sum_as_u32);
 }
 
-fn bfs(input: std.ArrayList([]const u8), start: BeamPosition, visited: *[110][110][4]bool) !void {
+fn bfs(input: std.ArrayList([]const u8), start: BeamPosition, visited: *[map_size][map_size][4]bool) !void {
     var working = std.ArrayList(BeamPosition).init(allocator);
     try working.append(start);
     while (working.items.len > 0) {
@@ -132,69 +134,34 @@ pub fn main() !void {
         try input.append(l);
     }
     var res: usize = 0;
-    for (0..110) |y| {
-        var visited: [110][110][4]bool = undefined;
-        try bfs(input, BeamPosition{ .x = 0, .y = y, .facing = Direction.East }, &visited);
-        var counter: usize = 0;
-        for (0..110) |i| {
-            for (0..110) |j| {
-                for (visited[i][j]) |a| {
-                    if (a == true) {
-                        counter += 1;
-                        break;
+
+    var direction_deltas = [_][2]i128{ [_]i128{ -1, 0 }, [_]i128{ 0, -1 }, [_]i128{ 1, 0 }, [_]i128{ 0, 1 } };
+    var start_x: i128 = map_size - 1;
+    var start_y: i128 = map_size - 1;
+    const fields = std.meta.fields(Direction);
+
+    inline for (fields) |facing| {
+        for (0..map_size) |k| {
+            var visited: [map_size][map_size][4]bool = undefined;
+            try bfs(input, BeamPosition{ .x = @intCast(start_x), .y = @intCast(start_y), .facing = @field(Direction, facing.name) }, &visited);
+            var counter: usize = 0;
+            for (0..map_size) |i| {
+                for (0..map_size) |j| {
+                    for (visited[i][j]) |a| {
+                        if (a == true) {
+                            counter += 1;
+                            break;
+                        }
                     }
                 }
             }
-        }
-        res = @max(res, counter);
-    }
-    for (0..110) |y| {
-        var visited: [110][110][4]bool = undefined;
-        try bfs(input, BeamPosition{ .x = input.getLast().len - 1, .y = y, .facing = Direction.West }, &visited);
-        var counter: usize = 0;
-        for (0..110) |i| {
-            for (0..110) |j| {
-                for (visited[i][j]) |a| {
-                    if (a == true) {
-                        counter += 1;
-                        break;
-                    }
-                }
+            res = @max(res, counter);
+
+            if (k < map_size - 1) {
+                start_x += direction_deltas[@intFromEnum(@field(Direction, facing.name))][0];
+                start_y += direction_deltas[@intFromEnum(@field(Direction, facing.name))][1];
             }
         }
-        res = @max(res, counter);
-    }
-    for (0..110) |x| {
-        var visited: [110][110][4]bool = undefined;
-        try bfs(input, BeamPosition{ .x = x, .y = 0, .facing = Direction.South }, &visited);
-        var counter: usize = 0;
-        for (0..110) |i| {
-            for (0..110) |j| {
-                for (visited[i][j]) |a| {
-                    if (a == true) {
-                        counter += 1;
-                        break;
-                    }
-                }
-            }
-        }
-        res = @max(res, counter);
-    }
-    for (0..110) |x| {
-        var visited: [110][110][4]bool = undefined;
-        try bfs(input, BeamPosition{ .x = x, .y = input.items.len - 1, .facing = Direction.North }, &visited);
-        var counter: usize = 0;
-        for (0..110) |i| {
-            for (0..110) |j| {
-                for (visited[i][j]) |a| {
-                    if (a == true) {
-                        counter += 1;
-                        break;
-                    }
-                }
-            }
-        }
-        res = @max(res, counter);
     }
     std.debug.print("{}\n", .{res});
 }
