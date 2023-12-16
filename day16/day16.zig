@@ -3,7 +3,6 @@ var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
 const allocator = arena.allocator();
 
 var lookup = std.AutoArrayHashMap(Direction, [2]i8).init(allocator);
-var visited: [110][110][4]bool = undefined;
 
 const Direction = enum(usize) {
     North,
@@ -35,7 +34,7 @@ fn add(a: usize, b: i8) usize {
     return @as(usize, sum_as_u32);
 }
 
-fn bfs(input: std.ArrayList([]const u8), start: BeamPosition) !void {
+fn bfs(input: std.ArrayList([]const u8), start: BeamPosition, visited: *[110][110][4]bool) !void {
     var working = std.ArrayList(BeamPosition).init(allocator);
     try working.append(start);
     while (working.items.len > 0) {
@@ -132,17 +131,70 @@ pub fn main() !void {
     while (split.next()) |l| {
         try input.append(l);
     }
-    try bfs(input, BeamPosition{ .x = 0, .y = 0, .facing = Direction.East });
-    var counter: usize = 0;
-    for (0..110) |i| {
-        for (0..110) |j| {
-            for (visited[i][j]) |a| {
-                if (a == true) {
-                    counter += 1;
-                    break;
+    var res: usize = 0;
+    for (0..110) |y| {
+        var visited: [110][110][4]bool = undefined;
+        try bfs(input, BeamPosition{ .x = 0, .y = y, .facing = Direction.East }, &visited);
+        var counter: usize = 0;
+        for (0..110) |i| {
+            for (0..110) |j| {
+                for (visited[i][j]) |a| {
+                    if (a == true) {
+                        counter += 1;
+                        break;
+                    }
                 }
             }
         }
+        res = @max(res, counter);
     }
-    std.debug.print("{}\n", .{counter});
+    for (0..110) |y| {
+        var visited: [110][110][4]bool = undefined;
+        try bfs(input, BeamPosition{ .x = input.getLast().len - 1, .y = y, .facing = Direction.West }, &visited);
+        var counter: usize = 0;
+        for (0..110) |i| {
+            for (0..110) |j| {
+                for (visited[i][j]) |a| {
+                    if (a == true) {
+                        counter += 1;
+                        break;
+                    }
+                }
+            }
+        }
+        res = @max(res, counter);
+    }
+    for (0..110) |x| {
+        var visited: [110][110][4]bool = undefined;
+        try bfs(input, BeamPosition{ .x = x, .y = 0, .facing = Direction.South }, &visited);
+        var counter: usize = 0;
+        for (0..110) |i| {
+            for (0..110) |j| {
+                for (visited[i][j]) |a| {
+                    if (a == true) {
+                        counter += 1;
+                        break;
+                    }
+                }
+            }
+        }
+        res = @max(res, counter);
+    }
+    for (0..110) |x| {
+        var visited: [110][110][4]bool = undefined;
+        try bfs(input, BeamPosition{ .x = x, .y = input.items.len - 1, .facing = Direction.North }, &visited);
+        var counter: usize = 0;
+        for (0..110) |i| {
+            for (0..110) |j| {
+                for (visited[i][j]) |a| {
+                    if (a == true) {
+                        counter += 1;
+                        break;
+                    }
+                }
+            }
+        }
+        res = @max(res, counter);
+    }
+    std.debug.print("{}\n", .{res});
 }
