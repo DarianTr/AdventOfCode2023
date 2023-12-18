@@ -26,13 +26,13 @@ const Edge = struct {
 var direction_deltas = [_][2]i64{ [_]i64{ 0, -1 }, [_]i64{ 1, 0 }, [_]i64{ 0, 1 }, [_]i64{ -1, 0 } };
 
 fn to_dir(a: u8) Dir {
-    if (a == 'R') {
+    if (a == 'R' or a == '0') {
         return Dir.East;
-    } else if (a == 'L') {
+    } else if (a == 'L' or a == '2') {
         return Dir.West;
-    } else if (a == 'U') {
+    } else if (a == 'U' or a == '3') {
         return Dir.North;
-    } else if (a == 'D') {
+    } else if (a == 'D' or a == '1') {
         return Dir.South;
     } else {
         unreachable;
@@ -43,8 +43,7 @@ fn det(x1: i64, y1: i64, x2: i64, y2: i64) i64 {
     return x1 * y2 - (x2 * y1);
 }
 
-fn area(i: std.ArrayList(Point), s: i64) i64 {
-    _ = s;
+fn area(i: std.ArrayList(Point)) i64 {
     var a: i64 = 0;
     var start_x: i64 = 0;
     var start_y: i64 = 0;
@@ -64,29 +63,7 @@ fn area(i: std.ArrayList(Point), s: i64) i64 {
     }
     a += det(start_x, start_y, 0, 0);
     const ar = @divFloor(a, 2);
-    const u_div = @divFloor(u, 2);
-    const inside = ar - u_div;
-    _ = inside;
-    std.debug.print("{} {} {}\n", .{ ar * 2, u, c });
     return ar + @divFloor(u, 2) + 1;
-}
-
-fn count(i: std.ArrayList(Point)) !i64 {
-    var res = std.AutoHashMap(Edge, void).init(allocator);
-    var start_x: i64 = 0;
-    var start_y: i64 = 0;
-    for (i.items) |in| {
-        var next_x = start_x;
-        var next_y = start_y;
-        for (0..in.len) |_| {
-            next_x += direction_deltas[@intFromEnum(in.dir)][0];
-            next_y += direction_deltas[@intFromEnum(in.dir)][1];
-            try res.put(Edge{ .x1 = next_x - direction_deltas[@intFromEnum(in.dir)][0], .y1 = next_y - direction_deltas[@intFromEnum(in.dir)][1], .x2 = next_x, .y2 = next_y }, {});
-        }
-        start_x = next_x;
-        start_y = next_y;
-    }
-    return @intCast(res.count());
 }
 
 pub fn main() !void {
@@ -98,15 +75,25 @@ pub fn main() !void {
     while (it.next()) |l| {
         var split_line = std.mem.split(u8, l, " ");
         const dir = to_dir(split_line.next().?[0]);
+        _ = dir;
         const len = try std.fmt.parseInt(usize, split_line.next().?, 10);
+        _ = len;
         const color = split_line.next().?;
+        const trimmed = std.mem.trim(u8, color, "(#)");
+        const new_len = try std.fmt.parseInt(usize, trimmed[0 .. trimmed.len - 1], 16);
+        const new_dir = to_dir(trimmed[trimmed.len - 1]);
+        // try instructions.append(Point{
+        //     .color = color,
+        //     .len = len,
+        //     .dir = dir,
+        // });
         try instructions.append(Point{
             .color = color,
-            .len = len,
-            .dir = dir,
+            .len = new_len,
+            .dir = new_dir,
         });
     }
-    const c = try count(instructions);
-    const res = area(instructions, c);
+    //const c = try count(instructions);
+    const res = area(instructions);
     std.debug.print("{}\n", .{res});
 }
