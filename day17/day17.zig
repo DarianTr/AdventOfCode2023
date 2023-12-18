@@ -39,10 +39,10 @@ fn get_neighbors(map: std.ArrayList([]const u8), cur: PQContent, heat_loss: usiz
         opp = null;
     }
     if (cur.direction != null and cur.straight_count < 3) {
-        var ix: i128 = @intCast(cur.x);
-        var iy: i128 = @intCast(cur.y);
-        var x: i128 = ix + direction_deltas[@intFromEnum(cur.direction.?)][0];
-        var y: i128 = iy + direction_deltas[@intFromEnum(cur.direction.?)][1];
+        const ix: i128 = @intCast(cur.x);
+        const iy: i128 = @intCast(cur.y);
+        const x: i128 = ix + direction_deltas[@intFromEnum(cur.direction.?)][0];
+        const y: i128 = iy + direction_deltas[@intFromEnum(cur.direction.?)][1];
         if ((x >= 0 and x < map.getLast().len) and (y >= 0 and y < map.items.len)) {
             try res.append(PQContent{
                 .x = @intCast(x),
@@ -56,10 +56,10 @@ fn get_neighbors(map: std.ArrayList([]const u8), cur: PQContent, heat_loss: usiz
         inline for (std.meta.fields(Direction)) |f| {
             const dir = @field(Direction, f.name);
             if (opp == null or dir != opp.?) {
-                var ix: i128 = @intCast(cur.x);
-                var iy: i128 = @intCast(cur.y);
-                var x: i128 = ix + direction_deltas[@intFromEnum(dir)][0];
-                var y: i128 = iy + direction_deltas[@intFromEnum(dir)][1];
+                const ix: i128 = @intCast(cur.x);
+                const iy: i128 = @intCast(cur.y);
+                const x: i128 = ix + direction_deltas[@intFromEnum(dir)][0];
+                const y: i128 = iy + direction_deltas[@intFromEnum(dir)][1];
 
                 var s_count = cur.straight_count;
                 if (cur.direction != null and dir == cur.direction.?) {
