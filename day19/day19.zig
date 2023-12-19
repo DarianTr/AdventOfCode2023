@@ -29,6 +29,57 @@ fn get_next(v: Val, w: Workflow, map: std.StringHashMap(Workflow)) Workflow {
     unreachable;
 }
 
+fn has_conditions(s: []const u8) bool {
+    for (s) |i| {
+        if (i == ':') return true;
+    }
+
+    return false;
+}
+
+fn to_fn(va: u8, val: i64, res: []const u8, cmp: u8) fn (Val) bool {
+    var mul: i64 = 1;
+    if (cmp == '<') mul = -1;
+    if (va == 'x') {
+        const f = fn (v: Val) bool{v.x > val};
+        return f;
+    } else if (va == 'm') {} else if (va == 'a') {} else {}
+    return true;
+}
+
+fn string_to_workflow(s: []const u8) !Workflow {
+    var it = std.mem.tokenizeAny(u8, s, "{}");
+    const name = it.next().?;
+    const conditions = it.next().?;
+    var fns = std.ArrayList(fn (Val) bool).init(allocator);
+    var it_2 = std.mem.tokenizeAny(u8, conditions, ",");
+    while (it_2.next()) |c| {
+        if (has_conditions(c)) {
+            const cmp = c[1];
+            _ = cmp;
+            var it_3 = std.mem.tokenizeAny(u8, c, ":<>");
+            var va = it_3.next().?[0];
+            _ = va;
+            var val = try std.fmt.parseInt(i64, it_3.next().?, 10);
+            _ = val;
+            var res = it_3.next().?;
+            _ = res;
+            // const f =
+        } else {
+            const f = fn (v: Val) bool{return true};
+            try fns.append(FPtr{
+                .cmp = f,
+                .res = c,
+            });
+        }
+    }
+
+    return Workflow{
+        .name = name,
+        .functions = fns,
+    };
+}
+
 fn main() !void {
     const fileName = "puzzle.txt";
     const file = try std.fs.cwd().openFile(fileName, .{});
