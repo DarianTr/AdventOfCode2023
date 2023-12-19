@@ -4,7 +4,7 @@ var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
 const allocator = arena.allocator();
 
 const FPtr = struct {
-    cmp: fn (Val) bool,
+    cmp: *const fn (v: Val) bool,
     res: []const u8,
 };
 
@@ -41,7 +41,8 @@ fn to_fn(va: u8, val: i64, res: []const u8, cmp: u8) fn (Val) bool {
     var mul: i64 = 1;
     if (cmp == '<') mul = -1;
     if (va == 'x') {
-        const f = fn (v: Val) bool{v.x > val};
+        fn (v: Val) bool{v.x > val};
+        const f = &fn (v: Val) bool{v.x > val};
         return f;
     } else if (va == 'm') {} else if (va == 'a') {} else {}
     return true;
